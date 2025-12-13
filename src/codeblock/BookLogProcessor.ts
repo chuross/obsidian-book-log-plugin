@@ -157,6 +157,22 @@ export class BookLogProcessor {
                 });
             }
 
+            // 6. Kindle Link
+            const title = details.title.native || details.title.romaji;
+            if (title) {
+                const isNovel = details.format === 'NOVEL';
+                const url = isNovel
+                    ? `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=digital-text&rh=p_n_feature_nineteen_browse-bin%3A3169286051`
+                    : `https://sale-bon.com/comic_list/search/?search-text=${encodeURIComponent(title)}`;
+
+                const btnContainer = detailsContainer.createDiv({ cls: 'anime-log-section' });
+                new ButtonComponent(btnContainer)
+                    .setButtonText('Kindleで確認')
+                    .onClick(() => {
+                        window.open(url, '_blank');
+                    });
+            }
+
         } catch (e) {
             console.error('Render error', e);
             detailsContainer.setText('エラーが発生しました');
