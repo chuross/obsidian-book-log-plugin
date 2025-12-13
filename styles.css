@@ -19,7 +19,8 @@
 
 .anime-grid-container {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5列に変更 */
+    grid-template-columns: repeat(3, 1fr);
+    /* 3列に変更 */
     gap: 15px;
     padding: 20px;
     overflow-y: auto;

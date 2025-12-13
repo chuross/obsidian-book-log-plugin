@@ -62,7 +62,7 @@ ${thumbnailEmbed}
 \`\`\`bookLog
 media_id: ${media.id}
 status: plan_to_read
-volume_status:
+
 \`\`\`
 `;
 

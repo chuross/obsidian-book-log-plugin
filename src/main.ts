@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
 import { AniListClient } from './api/AniListClient';
-import { GoogleBooksClient } from './api/GoogleBooksClient';
+
 import { BookFileService } from './services/BookFileService';
 import { BookLogProcessor } from './codeblock/BookLogProcessor';
 import { SearchModal } from './ui/SearchModal';
@@ -9,7 +9,6 @@ import { MediaNode } from './api/types';
 
 export default class BookLogPlugin extends Plugin {
     aniListClient: AniListClient;
-    googleBooksClient: GoogleBooksClient;
     fileService: BookFileService;
 
     async onload() {
@@ -30,12 +29,11 @@ export default class BookLogPlugin extends Plugin {
 
         try {
             this.aniListClient = new AniListClient();
-            this.googleBooksClient = new GoogleBooksClient();
             this.fileService = new BookFileService(this.app);
 
             // Register Code Block Processor
             this.registerMarkdownCodeBlockProcessor('bookLog', (source, el, ctx) => {
-                BookLogProcessor.postProcess(source, el, ctx, this.app, this.aniListClient, this.googleBooksClient, this.fileService);
+                BookLogProcessor.postProcess(source, el, ctx, this.app, this.aniListClient, this.fileService);
             });
 
         } catch (error) {

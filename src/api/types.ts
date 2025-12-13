@@ -26,15 +26,4 @@ export interface MediaNode {
     format?: string;
 }
 
-export interface GoogleBook {
-    id: string;
-    volumeInfo: {
-        title: string;
-        authors?: string[];
-        publishedDate?: string;
-        imageLinks?: {
-            thumbnail?: string;
-            smallThumbnail?: string;
-        };
-    };
-}
+
