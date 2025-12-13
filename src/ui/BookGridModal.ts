@@ -58,9 +58,8 @@ export class BookGridModal extends Modal {
                 this.onBack?.();
             };
         }
-        titleContainer.createEl('h2', { text: '検索結果' });
 
-        // Toggle button for mobile
+        // Toggle button for search options (right side)
         const toggleBtn = headerDiv.createEl('button', {
             cls: 'anime-grid-controls-toggle',
             text: '🔍 検索オプション'
