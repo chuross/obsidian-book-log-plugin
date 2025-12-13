@@ -20,6 +20,7 @@ export class BookGridModal extends Modal {
     currentPage: number = 1;
     isLoading: boolean = false;
     hasMore: boolean = true;
+    controlsVisible: boolean = true;
 
     constructor(
         app: App,
@@ -59,8 +60,28 @@ export class BookGridModal extends Modal {
         }
         titleContainer.createEl('h2', { text: '検索結果' });
 
+        // Toggle button for mobile
+        const toggleBtn = headerDiv.createEl('button', {
+            cls: 'anime-grid-controls-toggle',
+            text: '🔍 検索オプション'
+        });
+        toggleBtn.onclick = () => {
+            this.controlsVisible = !this.controlsVisible;
+            controlsDiv.toggleClass('is-collapsed', !this.controlsVisible);
+            toggleBtn.textContent = this.controlsVisible ? '🔍 検索オプション ▲' : '🔍 検索オプション ▼';
+        };
+
         // Controls (Moved out of header for new row)
         const controlsDiv = contentEl.createDiv({ cls: 'anime-grid-controls' });
+
+        // On mobile, start collapsed
+        if (document.body.classList.contains('is-mobile')) {
+            this.controlsVisible = false;
+            controlsDiv.addClass('is-collapsed');
+            toggleBtn.textContent = '🔍 検索オプション ▼';
+        } else {
+            toggleBtn.textContent = '🔍 検索オプション ▲';
+        }
 
         // Sort
         const sortSelect = controlsDiv.createEl('select');

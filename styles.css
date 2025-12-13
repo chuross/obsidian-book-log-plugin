@@ -17,6 +17,34 @@
     color: var(--text-normal);
 }
 
+.anime-grid-controls-toggle {
+    background-color: var(--interactive-accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: auto;
+}
+
+.anime-grid-controls-toggle:hover {
+    opacity: 0.9;
+}
+
+.anime-grid-controls {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.anime-grid-controls.is-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+}
+
 
 
 .anime-grid-pagination {
