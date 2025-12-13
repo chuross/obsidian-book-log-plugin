@@ -154,7 +154,18 @@ export class BookGridModal extends Modal {
             const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
             const imgUrl = media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium;
             if (imgUrl) {
-                imgContainer.createEl('img', { attr: { src: imgUrl } });
+                imgContainer.createEl('img', { attr: { src: imgUrl, referrerpolicy: 'no-referrer' } });
+            }
+
+            // Format Badge
+            if (media.format) {
+                const isNovel = media.format === 'NOVEL';
+                const badgeText = isNovel ? 'ノベル' : 'マンガ';
+                const badgeCls = isNovel ? 'is-novel' : 'is-manga';
+                imgContainer.createDiv({
+                    cls: `anime-card-format-badge ${badgeCls}`,
+                    text: badgeText
+                });
             }
 
             // Popularity/Score Badge?

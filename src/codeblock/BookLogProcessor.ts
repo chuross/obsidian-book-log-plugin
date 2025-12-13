@@ -94,8 +94,20 @@ export class BookLogProcessor {
                     if (node.type !== 'MANGA') return; // Filter only manga? or show anime too? Let's show all but click action only for manga.
 
                     const card = scroll.createDiv({ cls: 'anime-card mini-card' });
+                    const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
+
                     if (node.coverImage?.medium) {
-                        card.createEl('img', { attr: { src: node.coverImage.medium } });
+                        imgContainer.createEl('img', { attr: { src: node.coverImage.medium, referrerpolicy: 'no-referrer' } });
+                    }
+
+                    if (node.format) {
+                        const isNovel = node.format === 'NOVEL';
+                        const badgeText = isNovel ? 'ノベル' : 'マンガ';
+                        const badgeCls = isNovel ? 'is-novel' : 'is-manga';
+                        imgContainer.createDiv({
+                            cls: `anime-card-format-badge ${badgeCls}`,
+                            text: badgeText
+                        });
                     }
                     const t = node.title.native || node.title.romaji;
                     card.createDiv({ cls: 'anime-card-title', text: t });
@@ -120,8 +132,20 @@ export class BookLogProcessor {
                     if (!node) return;
 
                     const card = scroll.createDiv({ cls: 'anime-card mini-card' });
+                    const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
+
                     if (node.coverImage?.medium) {
-                        card.createEl('img', { attr: { src: node.coverImage.medium } });
+                        imgContainer.createEl('img', { attr: { src: node.coverImage.medium, referrerpolicy: 'no-referrer' } });
+                    }
+
+                    if (node.format) {
+                        const isNovel = node.format === 'NOVEL';
+                        const badgeText = isNovel ? 'ノベル' : 'マンガ';
+                        const badgeCls = isNovel ? 'is-novel' : 'is-manga';
+                        imgContainer.createDiv({
+                            cls: `anime-card-format-badge ${badgeCls}`,
+                            text: badgeText
+                        });
                     }
                     const t = node.title.native || node.title.romaji;
                     card.createDiv({ cls: 'anime-card-title', text: t });

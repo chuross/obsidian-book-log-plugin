@@ -52,6 +52,7 @@ export class AniListClient {
                         extraLarge
                     }
                     status
+                    format
                     volumes
                     chapters
                     popularity
@@ -117,30 +118,19 @@ export class AniListClient {
                 }
                 recommendations(sort: RATING_DESC, perPage: 10) {
                     nodes {
-                        mediaRecommendation {
-                            id
-                            title {
-                                romaji
-                                native
-                            }
                             coverImage {
                                 medium
                             }
+                            format
                         }
                     }
                 }
                 relations {
                     edges {
-                        node {
-                            id
-                            title {
-                                romaji
-                                native
-                            }
-                            type
                             coverImage {
                                 medium
                             }
+                            format
                         }
                         relationType
                     }

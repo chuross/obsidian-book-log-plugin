@@ -44,13 +44,14 @@ export class BookFileService {
 
         // Thumbnail embed
         const thumbnailEmbed = thumbnailPath
-            ? `<div contenteditable="false"><img src="${thumbnailPath}" alt="${displayTitle}" width="300" /></div>`
+            ? `![[${thumbnailPath}|300]]`
             : '';
 
         const content = `---
 anilist_id: ${media.id}
 title: "${displayTitle}"
 author: "${author}"
+format: ${media.format}
 tags:
 ${tags.map(t => `  - ${t}`).join('\n')}
 ---
@@ -100,6 +101,7 @@ status: plan_to_read
             return normalizedPath;
         } catch (error) {
             console.error('Failed to save thumbnail:', error);
+            new Notice(`Failed to save thumbnail: ${error.message}`);
             return '';
         }
     }
@@ -107,8 +109,16 @@ status: plan_to_read
     private async ensureDirectory(path: string) {
         const normalized = normalizePath(path);
         const folder = this.app.vault.getAbstractFileByPath(normalized);
-        if (!folder) {
-            await this.app.vault.createFolder(normalized);
+        if (folder) return;
+
+        const parts = normalized.split('/');
+        let currentPath = '';
+        for (const part of parts) {
+            currentPath = currentPath === '' ? part : `${currentPath}/${part}`;
+            const existing = this.app.vault.getAbstractFileByPath(currentPath);
+            if (!existing) {
+                await this.app.vault.createFolder(currentPath);
+            }
         }
     }
 
