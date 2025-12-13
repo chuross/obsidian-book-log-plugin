@@ -21,19 +21,25 @@ export class AniListClient {
 
         const response = await requestUrl(options);
 
-        if (response.status !== 200) {
+        if (response.status >= 400) {
             console.error('AniList API Request Failed:', response);
             throw new Error(`AniList API Request failed with status ${response.status}`);
         }
 
-        return response.json as T;
+        const json = response.json;
+        if (json.errors) {
+            console.error('AniList GraphQL Errors:', json.errors);
+            throw new Error('AniList GraphQL Error');
+        }
+
+        return json as T;
     }
 
     async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC'): Promise<MediaNode[]> {
         const query = `
         query ($search: String, $genre: String, $tag: String, $sort: [MediaSort]) {
             Page(perPage: 50) {
-                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: [$sort]) {
+                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort) {
                     id
                     title {
                         romaji
@@ -55,7 +61,7 @@ export class AniListClient {
         }
         `;
 
-        const variables: any = { sort };
+        const variables: any = { sort: [sort] };
         if (search) variables.search = search;
         if (genre) variables.genre = genre;
         if (tag) variables.tag = tag;

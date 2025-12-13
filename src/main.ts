@@ -15,21 +15,11 @@ export default class BookLogPlugin extends Plugin {
     async onload() {
         console.log('Loading Book Log Plugin');
 
-        this.aniListClient = new AniListClient();
-        this.googleBooksClient = new GoogleBooksClient();
-        this.fileService = new BookFileService(this.app);
-
-        // Register Code Block Processor
-        this.registerMarkdownCodeBlockProcessor('bookLog', (source, el, ctx) => {
-            BookLogProcessor.postProcess(source, el, ctx, this.app, this.aniListClient, this.googleBooksClient, this.fileService);
-        });
-
-        // Add Ribbon Icon
+        // Add Ribbon Icon - Add this first to ensure it appears
         this.addRibbonIcon('book', 'Open Book Log', () => {
             this.openSearchModal();
         });
 
-        // Add Command
         this.addCommand({
             id: 'open-book-log-search',
             name: 'Open Search',
@@ -37,6 +27,21 @@ export default class BookLogPlugin extends Plugin {
                 this.openSearchModal();
             }
         });
+
+        try {
+            this.aniListClient = new AniListClient();
+            this.googleBooksClient = new GoogleBooksClient();
+            this.fileService = new BookFileService(this.app);
+
+            // Register Code Block Processor
+            this.registerMarkdownCodeBlockProcessor('bookLog', (source, el, ctx) => {
+                BookLogProcessor.postProcess(source, el, ctx, this.app, this.aniListClient, this.googleBooksClient, this.fileService);
+            });
+
+        } catch (error) {
+            console.error('Failed to initialize Book Log Plugin services:', error);
+            // new Notice('Book Log Plugin initialization failed. Please check the console.');
+        }
     }
 
     onunload() {
