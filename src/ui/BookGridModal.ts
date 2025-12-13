@@ -82,7 +82,10 @@ export class BookGridModal extends Modal {
         finishedCheck.checked = this.filterFinished;
         finishedCheck.onchange = (e) => {
             this.filterFinished = (e.target as HTMLInputElement).checked;
-            this.applyFilters();
+            this.currentPage = 1;
+            this.mediaList = [];
+            this.hasMore = true;
+            this.loadData();
         };
 
         // Filter: Volumes
@@ -133,12 +136,14 @@ export class BookGridModal extends Modal {
         this.hasMore = true;
         this.isLoading = true;
 
-        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage);
+        const { status, volLess, volGreater } = this.getFilterParams();
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater);
+
         this.mediaList = newMedia;
         this.hasMore = newMedia.length >= 50;
         this.isLoading = false;
 
-        this.applyFilters();
+        this.renderItems(newMedia, true);
     }
 
     async loadMore() {
@@ -149,78 +154,44 @@ export class BookGridModal extends Modal {
         const gridContainer = this.contentEl.querySelector('.anime-grid-container');
         const loadingEl = gridContainer?.createDiv({ text: '追加読み込み中...', cls: 'anime-loading' });
 
-        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage);
+        const { status, volLess, volGreater } = this.getFilterParams();
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater);
+
         this.mediaList = [...this.mediaList, ...newMedia];
         this.hasMore = newMedia.length >= 50;
         this.isLoading = false;
 
         loadingEl?.remove();
-        this.appendItems(newMedia);
+        this.renderItems(newMedia, false);
     }
 
-    applyFilters() {
-        const gridContainer = this.contentEl.querySelector('.anime-grid-container');
-        if (!gridContainer) return;
-        gridContainer.empty();
-
-        let list = this.mediaList;
-
-        if (this.filterFinished) {
-            list = list.filter(m => m.status === 'FINISHED');
-        }
+    getFilterParams() {
+        const status = this.filterFinished ? 'FINISHED' : undefined;
+        let volLess: number | undefined;
+        let volGreater: number | undefined;
 
         if (this.filterVolumes !== 'any') {
-            list = list.filter(m => {
-                const vol = m.volumes || 9999; // If unknown, keep it? or hide? Assume unknown is large or small? Let's assume if unknown we can't filter safely, or treat as fits 'more'? Let's strict filter if vol known.
-                if (!m.volumes) return false; // Hide unknown volumes if filtering
-
-                const v = parseInt(this.filterVolumes);
-                if (this.filterVolumes === 'more') {
-                    return m.volumes > 20;
-                } else {
-                    return m.volumes <= v;
-                }
-            });
+            if (this.filterVolumes === 'more') {
+                volGreater = 20;
+            } else {
+                volLess = parseInt(this.filterVolumes) + 1;
+            }
         }
+        return { status, volLess, volGreater };
+    }
 
-        this.filteredList = list;
+    renderItems(items: MediaNode[], clear: boolean = false) {
+        const gridContainer = this.contentEl.querySelector('.anime-grid-container');
+        if (!gridContainer) return;
 
-        if (list.length === 0) {
+        if (clear) gridContainer.empty();
+
+        if (items.length === 0 && this.mediaList.length === 0) {
             gridContainer.createDiv({ text: '見つかりませんでした。' });
             return;
         }
 
-        list.forEach(media => this.renderCard(gridContainer, media));
-
-        // If content is not scrollable (too few items) but there is more data, load more automatically
-        requestAnimationFrame(() => {
-            if (this.hasMore && gridContainer.scrollHeight <= gridContainer.clientHeight) {
-                this.loadMore();
-            }
-        });
-    }
-
-    appendItems(items: MediaNode[]) {
-        const gridContainer = this.contentEl.querySelector('.anime-grid-container');
-        if (!gridContainer) return;
-
-        let list = items;
-        if (this.filterFinished) {
-            list = list.filter(m => m.status === 'FINISHED');
-        }
-        if (this.filterVolumes !== 'any') {
-            list = list.filter(m => {
-                if (!m.volumes) return false;
-                const v = parseInt(this.filterVolumes);
-                if (this.filterVolumes === 'more') {
-                    return m.volumes > 20;
-                } else {
-                    return m.volumes <= v;
-                }
-            });
-        }
-
-        list.forEach(media => this.renderCard(gridContainer, media));
+        items.forEach(media => this.renderCard(gridContainer, media));
 
         requestAnimationFrame(() => {
             if (this.hasMore && gridContainer.scrollHeight <= gridContainer.clientHeight) {
