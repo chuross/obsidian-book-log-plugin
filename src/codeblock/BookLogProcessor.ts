@@ -1,4 +1,5 @@
 import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation } from 'obsidian';
+import { createHash } from 'crypto';
 import { AniListClient } from '../api/AniListClient';
 
 import { BookFileService } from '../services/BookFileService';
@@ -161,9 +162,14 @@ export class BookLogProcessor {
             const title = details.title.native || details.title.romaji;
             if (title) {
                 const isNovel = details.format === 'NOVEL';
-                const url = isNovel
-                    ? `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=digital-text&rh=p_n_feature_nineteen_browse-bin%3A3169286051`
-                    : `https://sale-bon.com/comic_list/search/?search-text=${encodeURIComponent(title)}`;
+                let url = '';
+
+                if (isNovel) {
+                    url = `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=digital-text&rh=p_n_feature_nineteen_browse-bin%3A3169286051`;
+                } else {
+                    const hash = createHash('md5').update(title).digest('hex');
+                    url = `https://sale-bon.com/detail/?series_hash=${hash}`;
+                }
 
                 const btnContainer = detailsContainer.createDiv({ cls: 'anime-log-section' });
                 new ButtonComponent(btnContainer)
