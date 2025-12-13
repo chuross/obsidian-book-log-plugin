@@ -57,8 +57,8 @@ export class BookGridModal extends Modal {
         }
         titleContainer.createEl('h2', { text: '検索結果' });
 
-        // Controls
-        const controlsDiv = headerDiv.createDiv({ cls: 'anime-grid-controls' });
+        // Controls (Moved out of header for new row)
+        const controlsDiv = contentEl.createDiv({ cls: 'anime-grid-controls' });
 
         // Sort
         const sortSelect = controlsDiv.createEl('select');
@@ -152,7 +152,7 @@ export class BookGridModal extends Modal {
 
             // Image
             const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
-            const imgUrl = media.coverImage?.large || media.coverImage?.medium;
+            const imgUrl = media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium;
             if (imgUrl) {
                 imgContainer.createEl('img', { attr: { src: imgUrl } });
             }

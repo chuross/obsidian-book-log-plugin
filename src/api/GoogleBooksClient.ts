@@ -5,23 +5,24 @@ const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 
 export class GoogleBooksClient {
 
-    async searchBooks(title: string, author?: string): Promise<GoogleBook[]> {
+    async searchBooks(title: string, author?: string, format?: string): Promise<GoogleBook[]> {
         const queryParts = [`intitle:${title}`];
         if (author) {
             queryParts.push(`inauthor:${author}`);
         }
+
+        // Add format-specific subject filter
+        if (format === 'MANGA') {
+            queryParts.push('subject:comics');
+        } else if (format === 'NOVEL') {
+            queryParts.push('subject:fiction');
+        }
+
         const q = queryParts.join('+');
 
         const url = new URL(GOOGLE_BOOKS_API_URL);
         url.searchParams.append('q', q);
-        url.searchParams.append('orderBy', 'relevance'); // 'newest' might be better for finding volumes logic but relevance is usually safer for finding the series. 
-        // Logic asked for "oldest" (published date old -> new) for list of volumes. 
-        // Google Books API orderBy only supports 'relevance' or 'newest'. 
-        // We will fetch by relevance or newest and sort client side if needed, but 'newest' helps get recent ones.
-        // Actually user request: "公開日古い順で3列グリッドで並べる" (Display in 3 cols, ordered by publish date oldest first).
-        // Since API only supports newest, we can get newest and reverse, or get relevance and sort.
-        // Let's use 'relevance' to ensure we get the right books, then we can filter/sort.
-        // Also maxResults is 40 (max).
+        url.searchParams.append('orderBy', 'relevance');
         url.searchParams.append('maxResults', '40');
 
         const options: RequestUrlParam = {
@@ -41,11 +42,11 @@ export class GoogleBooksClient {
 
             const books = data.items as GoogleBook[];
 
-            // Client-side sort by publishedDate (oldest first)
+            // Sort by volume number extracted from title
             books.sort((a, b) => {
-                const dateA = a.volumeInfo.publishedDate || '9999';
-                const dateB = b.volumeInfo.publishedDate || '9999';
-                return dateA.localeCompare(dateB);
+                const volA = this.extractVolumeNumber(a.volumeInfo.title);
+                const volB = this.extractVolumeNumber(b.volumeInfo.title);
+                return volA - volB;
             });
 
             return books;
@@ -54,5 +55,26 @@ export class GoogleBooksClient {
             console.error('Failed to search Google Books', e);
             return [];
         }
+    }
+
+    private extractVolumeNumber(title: string): number {
+        // Match patterns like "1巻", "(1)", "Vol.1", "第1巻", "1" at end, etc.
+        const patterns = [
+            /(\d+)\s*巻/,           // 1巻, 第1巻
+            /Vol\.?\s*(\d+)/i,      // Vol.1, Vol 1
+            /\((\d+)\)/,            // (1)
+            /【(\d+)】/,            // 【1】
+            /\s(\d+)$/,             // ends with number
+            /(\d+)$/                // fallback: last number in string
+        ];
+
+        for (const pattern of patterns) {
+            const match = title.match(pattern);
+            if (match) {
+                return parseInt(match[1], 10);
+            }
+        }
+
+        return 9999; // Unknown volume goes to end
     }
 }

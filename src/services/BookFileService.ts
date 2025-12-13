@@ -27,8 +27,8 @@ export class BookFileService {
 
         // Save thumbnail
         let thumbnailPath = '';
-        if (media.coverImage?.large || media.coverImage?.medium) {
-            const imageUrl = media.coverImage.large || media.coverImage.medium;
+        if (media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium) {
+            const imageUrl = media.coverImage.extraLarge || media.coverImage.large || media.coverImage.medium;
             if (imageUrl) {
                 thumbnailPath = await this.saveThumbnail(media.id, imageUrl);
             }
@@ -39,7 +39,8 @@ export class BookFileService {
             media.genres.forEach(g => tags.push(`booklog_${this.sanitizeTag(g)}`));
         }
 
-        const author = media.staff?.edges.find(e => e.role === 'Story & Art' || e.role === 'Story' || e.role === 'Art')?.node.name.full || '';
+        const authorNode = media.staff?.edges.find(e => e.role === 'Story & Art' || e.role === 'Story' || e.role === 'Art')?.node;
+        const author = authorNode?.name.native || authorNode?.name.full || '';
 
         // Thumbnail embed
         const thumbnailEmbed = thumbnailPath

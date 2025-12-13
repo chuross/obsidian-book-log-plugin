@@ -49,6 +49,7 @@ export class AniListClient {
                     coverImage {
                         medium
                         large
+                        extraLarge
                     }
                     status
                     volumes
@@ -89,8 +90,10 @@ export class AniListClient {
                 coverImage {
                     medium
                     large
+                    extraLarge
                 }
                 status
+                format
                 volumes
                 chapters
                 popularity
@@ -106,6 +109,7 @@ export class AniListClient {
                         node {
                             name {
                                 full
+                                native
                             }
                         }
                         role

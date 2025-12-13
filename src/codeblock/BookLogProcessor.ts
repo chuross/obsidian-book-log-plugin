@@ -88,9 +88,10 @@ export class BookLogProcessor {
 
             // Fetch Google Books
             const title = details.title.native || details.title.romaji || '';
-            const author = details.staff?.edges.find(e => e.role === 'Story & Art' || e.role === 'Story' || e.role === 'Art')?.node.name.full;
+            const authorNode = details.staff?.edges.find(e => e.role === 'Story & Art' || e.role === 'Story' || e.role === 'Art')?.node;
+            const author = authorNode?.name.native || authorNode?.name.full;
 
-            googleBooks.searchBooks(title, author).then(books => {
+            googleBooks.searchBooks(title, author, details.format).then(books => {
                 volGrid.empty();
                 if (books.length === 0) {
                     volGrid.createDiv({ text: '単行本情報が見つかりませんでした', attr: { style: 'grid-column: 1/-1' } });
