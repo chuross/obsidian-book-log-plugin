@@ -55,9 +55,13 @@ export class BookLogProcessor {
                 return;
             }
 
-            // 1. Basic Infos
+            // Add Volume Info to Status Section
+            statusContainer.createEl('h4', { text: '巻数' });
+            statusContainer.createDiv({ text: details.volumes ? `全${details.volumes}巻` : '不明' });
+
+            // 1. Statistics Info (Merged)
             const infoSection = detailsContainer.createDiv({ cls: 'anime-log-section' });
-            infoSection.createEl('h4', { text: '情報' });
+            infoSection.createEl('h4', { text: '統計情報' });
             const infoGrid = infoSection.createDiv({ cls: 'anime-stats-grid' });
 
             const createInfoItem = (label: string, val: string) => {
@@ -67,16 +71,9 @@ export class BookLogProcessor {
             };
 
             createInfoItem('連載状況', details.status === 'FINISHED' ? '完結' : '連載中');
-            createInfoItem('巻数', details.volumes ? `${details.volumes}巻` : '不明');
             if (details.averageScore) createInfoItem('スコア', `${details.averageScore}%`);
 
-
-            // 2. Statistics
             if (details.stats?.statusDistribution) {
-                const statSection = detailsContainer.createDiv({ cls: 'anime-log-section' });
-                statSection.createEl('h4', { text: '統計' });
-                const statGrid = statSection.createDiv({ cls: 'anime-stats-grid' });
-
                 details.stats.statusDistribution.forEach(s => {
                     const labelMap: any = { 'CURRENT': '読んでる', 'PLANNING': '読みたい', 'COMPLETED': '完了', 'DROPPED': '中止', 'PAUSED': '中断' };
                     createInfoItem(labelMap[s.status] || s.status, s.amount.toString());
