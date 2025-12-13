@@ -6,16 +6,20 @@ const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 export class GoogleBooksClient {
 
     async searchBooks(title: string, author?: string, format?: string): Promise<GoogleBook[]> {
-        const queryParts = [`intitle:${title}`];
-        if (author) {
-            queryParts.push(`inauthor:${author}`);
+        // Build query with format-specific keyword
+        let formatKeyword = '';
+        if (format === 'MANGA') {
+            formatKeyword = '漫画';
+        } else if (format === 'NOVEL') {
+            formatKeyword = '小説';
         }
 
-        // Add format-specific subject filter
-        if (format === 'MANGA') {
-            queryParts.push('subject:comics');
-        } else if (format === 'NOVEL') {
-            queryParts.push('subject:fiction');
+        const queryParts = [`intitle:${title}`];
+        if (formatKeyword) {
+            queryParts.push(formatKeyword);
+        }
+        if (author) {
+            queryParts.push(`inauthor:${author}`);
         }
 
         const q = queryParts.join('+');
