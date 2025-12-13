@@ -73,7 +73,7 @@ export class BookGridModal extends Modal {
         sortSelect.value = this.currentSort;
         sortSelect.onchange = async (e) => {
             this.currentSort = (e.target as HTMLSelectElement).value;
-            await this.loadData(); // Re-fetch for sorting handled by API or re-sort locally? API supports sorting.
+            this.loadData(); // Re-fetch for sorting handled by API or re-sort locally? API supports sorting.
         };
 
         // Filter: Finished

@@ -1,10 +1,14 @@
 import { App, Modal, Setting } from 'obsidian';
+import { AniListClient } from '../api/AniListClient';
+import { TagTranslator } from '../utils/TagTranslator';
 
 export class SearchModal extends Modal {
     onSearch: (search: string, genre: string, tag: string, format: string) => void;
+    aniListClient: AniListClient;
 
-    constructor(app: App, onSearch: (search: string, genre: string, tag: string, format: string) => void) {
+    constructor(app: App, aniListClient: AniListClient, onSearch: (search: string, genre: string, tag: string, format: string) => void) {
         super(app);
+        this.aniListClient = aniListClient;
         this.onSearch = onSearch;
     }
 
@@ -54,9 +58,16 @@ export class SearchModal extends Modal {
         new Setting(contentEl)
             .setName('タグ')
             .setDesc('タグで検索 (例: Isekai)')
-            .addText(text => text
-                .setPlaceholder('Tag...')
-                .onChange(value => searchTag = value));
+            .addText(text => {
+                text.setPlaceholder('タグ検索...');
+                text.inputEl.setAttribute('list', 'search-modal-tag-list');
+                text.onChange(value => searchTag = value);
+            });
+
+        const dataList = contentEl.createEl('datalist', { attr: { id: 'search-modal-tag-list' } });
+        this.aniListClient.getTags().then(tags => {
+            tags.forEach(t => dataList.createEl('option', { value: TagTranslator.getDisplayTag(t) }));
+        });
 
         new Setting(contentEl)
             .addButton(btn => btn
@@ -64,7 +75,8 @@ export class SearchModal extends Modal {
                 .setCta()
                 .onClick(() => {
                     this.close();
-                    this.onSearch(searchQuery, selectedGenre, searchTag, selectedFormat);
+                    const realTag = TagTranslator.getOriginalTag(searchTag);
+                    this.onSearch(searchQuery, selectedGenre, realTag, selectedFormat);
                 }));
     }
 

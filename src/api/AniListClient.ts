@@ -169,4 +169,22 @@ export class AniListClient {
             return null;
         }
     }
+
+    async getTags(): Promise<string[]> {
+        const query = `
+        query {
+            MediaTagCollection {
+                name
+            }
+        }
+        `;
+
+        try {
+            const data = await this.query<any>(query);
+            return data.data.MediaTagCollection.map((tag: any) => tag.name);
+        } catch (e) {
+            console.error('Failed to get tags', e);
+            return [];
+        }
+    }
 }

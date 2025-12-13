@@ -47,7 +47,7 @@ export default class BookLogPlugin extends Plugin {
     }
 
     openSearchModal() {
-        new SearchModal(this.app, (search, genre, tag, format) => {
+        new SearchModal(this.app, this.aniListClient, (search, genre, tag, format) => {
             this.openGridModal(search, genre, tag, format);
         }).open();
     }
