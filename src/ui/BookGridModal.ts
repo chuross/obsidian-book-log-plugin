@@ -14,10 +14,12 @@ export class BookGridModal extends Modal {
     mediaList: MediaNode[] = [];
     filteredList: MediaNode[] = [];
 
-    // Filter/Sort State
     currentSort: string = 'POPULARITY_DESC';
     filterFinished: boolean = false;
     filterVolumes: string = 'any'; // 'any', '5', '10', '20', 'more'
+    currentPage: number = 1;
+    isLoading: boolean = false;
+    hasMore: boolean = true;
 
     constructor(
         app: App,
@@ -95,7 +97,10 @@ export class BookGridModal extends Modal {
         volSelect.value = this.filterVolumes;
         volSelect.onchange = (e) => {
             this.filterVolumes = (e.target as HTMLSelectElement).value;
-            this.applyFilters();
+            this.currentPage = 1;
+            this.mediaList = [];
+            this.hasMore = true;
+            this.loadData();
         };
 
 
@@ -103,16 +108,54 @@ export class BookGridModal extends Modal {
         const gridContainer = contentEl.createDiv({ cls: 'anime-grid-container' });
         gridContainer.createDiv({ text: '読み込み中...', cls: 'anime-loading' });
 
+        // Infinite scroll
+        gridContainer.addEventListener('scroll', () => {
+            if (this.isLoading || !this.hasMore) return;
+            const scrollTop = gridContainer.scrollTop;
+            const scrollHeight = gridContainer.scrollHeight;
+            const clientHeight = gridContainer.clientHeight;
+            if (scrollTop + clientHeight >= scrollHeight - 300) {
+                this.loadMore();
+            }
+        });
+
         await this.loadData();
     }
 
     async loadData() {
         const gridContainer = this.contentEl.querySelector('.anime-grid-container');
-        if (gridContainer) gridContainer.empty();
-        if (gridContainer) gridContainer.createDiv({ text: '読み込み中...', cls: 'anime-loading' });
+        if (!gridContainer) return;
+        gridContainer.empty();
+        gridContainer.createDiv({ text: '読み込み中...', cls: 'anime-loading' });
 
-        this.mediaList = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format);
+        this.currentPage = 1;
+        this.mediaList = [];
+        this.hasMore = true;
+        this.isLoading = true;
+
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage);
+        this.mediaList = newMedia;
+        this.hasMore = newMedia.length >= 50;
+        this.isLoading = false;
+
         this.applyFilters();
+    }
+
+    async loadMore() {
+        if (this.isLoading || !this.hasMore) return;
+        this.isLoading = true;
+        this.currentPage++;
+
+        const gridContainer = this.contentEl.querySelector('.anime-grid-container');
+        const loadingEl = gridContainer?.createDiv({ text: '追加読み込み中...', cls: 'anime-loading' });
+
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage);
+        this.mediaList = [...this.mediaList, ...newMedia];
+        this.hasMore = newMedia.length >= 50;
+        this.isLoading = false;
+
+        loadingEl?.remove();
+        this.appendItems(newMedia);
     }
 
     applyFilters() {
@@ -147,49 +190,87 @@ export class BookGridModal extends Modal {
             return;
         }
 
-        list.forEach(media => {
-            const card = gridContainer.createDiv({ cls: 'anime-card' });
+        list.forEach(media => this.renderCard(gridContainer, media));
 
-            // Image
-            const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
-            const imgUrl = media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium;
-            if (imgUrl) {
-                imgContainer.createEl('img', { attr: { src: imgUrl, referrerpolicy: 'no-referrer' } });
+        // If content is not scrollable (too few items) but there is more data, load more automatically
+        requestAnimationFrame(() => {
+            if (this.hasMore && gridContainer.scrollHeight <= gridContainer.clientHeight) {
+                this.loadMore();
             }
-
-            // Format Badge
-            if (media.format) {
-                const isNovel = media.format === 'NOVEL';
-                const badgeText = isNovel ? 'ノベル' : 'マンガ';
-                const badgeCls = isNovel ? 'is-novel' : 'is-manga';
-                imgContainer.createDiv({
-                    cls: `anime-card-format-badge ${badgeCls}`,
-                    text: badgeText
-                });
-            }
-
-            // Popularity/Score Badge?
-            if (media.averageScore) {
-                imgContainer.createDiv({
-                    cls: 'anime-card-popularity',
-                    text: `${media.averageScore}%` // Using score instead of popularity rank
-                });
-            }
-
-            // Title
-            const title = media.title.native || media.title.romaji || media.title.english || 'No Title';
-            card.createDiv({ cls: 'anime-card-title', text: title });
-
-            // Status/Volumes Subtext
-            const statusText = media.status === 'FINISHED' ? '完結' : '連載中';
-            const volText = media.volumes ? `全${media.volumes}巻` : '';
-            card.createDiv({ text: `${statusText} ${volText}`, attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-top: 4px;' } });
-
-            card.onclick = () => {
-                this.close();
-                this.onBookSelect(media);
-            };
         });
+    }
+
+    appendItems(items: MediaNode[]) {
+        const gridContainer = this.contentEl.querySelector('.anime-grid-container');
+        if (!gridContainer) return;
+
+        let list = items;
+        if (this.filterFinished) {
+            list = list.filter(m => m.status === 'FINISHED');
+        }
+        if (this.filterVolumes !== 'any') {
+            list = list.filter(m => {
+                if (!m.volumes) return false;
+                const v = parseInt(this.filterVolumes);
+                if (this.filterVolumes === 'more') {
+                    return m.volumes > 20;
+                } else {
+                    return m.volumes <= v;
+                }
+            });
+        }
+
+        list.forEach(media => this.renderCard(gridContainer, media));
+
+        requestAnimationFrame(() => {
+            if (this.hasMore && gridContainer.scrollHeight <= gridContainer.clientHeight) {
+                this.loadMore();
+            }
+        });
+    }
+
+    renderCard(container: Element, media: MediaNode) {
+        const card = container.createDiv({ cls: 'anime-card' });
+
+        // Image
+        const imgContainer = card.createDiv({ cls: 'anime-card-image-container' });
+        const imgUrl = media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium;
+        if (imgUrl) {
+            imgContainer.createEl('img', { attr: { src: imgUrl, referrerpolicy: 'no-referrer' } });
+        }
+
+        // Format Badge
+        if (media.format) {
+            const isNovel = media.format === 'NOVEL';
+            const badgeText = isNovel ? 'ノベル' : 'マンガ';
+            const badgeCls = isNovel ? 'is-novel' : 'is-manga';
+            imgContainer.createDiv({
+                cls: `anime-card-format-badge ${badgeCls}`,
+                text: badgeText
+            });
+        }
+
+        // Popularity/Score Badge
+        if (media.averageScore) {
+            imgContainer.createDiv({
+                cls: 'anime-card-popularity',
+                text: `${media.averageScore}%`
+            });
+        }
+
+        // Title
+        const title = media.title.native || media.title.romaji || media.title.english || 'No Title';
+        card.createDiv({ cls: 'anime-card-title', text: title });
+
+        // Status/Volumes Subtext
+        const statusText = media.status === 'FINISHED' ? '完結' : '連載中';
+        const volText = media.volumes ? `全${media.volumes}巻` : '';
+        card.createDiv({ text: `${statusText} ${volText}`, attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-top: 4px;' } });
+
+        card.onclick = () => {
+            this.close();
+            this.onBookSelect(media);
+        };
     }
 
     onClose() {

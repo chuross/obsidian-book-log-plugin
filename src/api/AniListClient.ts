@@ -35,10 +35,10 @@ export class AniListClient {
         return json as T;
     }
 
-    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC', format?: string): Promise<MediaNode[]> {
+    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC', format?: string, page: number = 1): Promise<MediaNode[]> {
         const query = `
-        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort], $format: MediaFormat) {
-            Page(perPage: 50) {
+        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort], $format: MediaFormat, $page: Int) {
+            Page(perPage: 50, page: $page) {
                 media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort, format: $format) {
                     id
                     title {
@@ -63,7 +63,7 @@ export class AniListClient {
         }
         `;
 
-        const variables: any = { sort: [sort] };
+        const variables: any = { sort: [sort], page };
         if (search) variables.search = search;
         if (genre) variables.genre = genre;
         if (tag) variables.tag = tag;
