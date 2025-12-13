@@ -118,6 +118,12 @@ export class AniListClient {
                 }
                 recommendations(sort: RATING_DESC, perPage: 10) {
                     nodes {
+                        mediaRecommendation {
+                            id
+                            title {
+                                romaji
+                                native
+                            }
                             coverImage {
                                 medium
                             }
@@ -127,6 +133,13 @@ export class AniListClient {
                 }
                 relations {
                     edges {
+                        node {
+                            id
+                            title {
+                                romaji
+                                native
+                            }
+                            type
                             coverImage {
                                 medium
                             }
