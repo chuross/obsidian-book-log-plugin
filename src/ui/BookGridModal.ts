@@ -17,6 +17,7 @@ export class BookGridModal extends Modal {
     currentSort: string = 'POPULARITY_DESC';
     filterFinished: boolean = false;
     filterVolumes: string = 'any'; // 'any', '5', '10', '20', 'more'
+    filterDecade: string = 'any'; // 'any', '1990', '2000', '2010', '2020'
     currentPage: number = 1;
     isLoading: boolean = false;
     hasMore: boolean = true;
@@ -159,6 +160,24 @@ export class BookGridModal extends Modal {
             this.loadData();
         };
 
+        // Filter: Decade
+        const decadeSelect = controlsDiv.createEl('select');
+        [
+            { v: 'any', l: '年代: 指定なし' },
+            { v: '1990', l: '1990年代' },
+            { v: '2000', l: '2000年代' },
+            { v: '2010', l: '2010年代' },
+            { v: '2020', l: '2020年代〜' }
+        ].forEach(o => decadeSelect.createEl('option', { value: o.v, text: o.l }));
+        decadeSelect.value = this.filterDecade;
+        decadeSelect.onchange = (e) => {
+            this.filterDecade = (e.target as HTMLSelectElement).value;
+            this.currentPage = 1;
+            this.mediaList = [];
+            this.hasMore = true;
+            this.loadData();
+        };
+
 
         // Content
         const gridContainer = contentEl.createDiv({ cls: 'anime-grid-container' });
@@ -189,8 +208,8 @@ export class BookGridModal extends Modal {
         this.hasMore = true;
         this.isLoading = true;
 
-        const { status, volLess, volGreater } = this.getFilterParams();
-        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater);
+        const { status, volLess, volGreater, startDateGreater, startDateLesser } = this.getFilterParams();
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater, startDateGreater, startDateLesser);
 
         this.mediaList = newMedia;
         this.hasMore = newMedia.length >= 50;
@@ -207,8 +226,8 @@ export class BookGridModal extends Modal {
         const gridContainer = this.contentEl.querySelector('.anime-grid-container');
         const loadingEl = gridContainer?.createDiv({ text: '追加読み込み中...', cls: 'anime-loading' });
 
-        const { status, volLess, volGreater } = this.getFilterParams();
-        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater);
+        const { status, volLess, volGreater, startDateGreater, startDateLesser } = this.getFilterParams();
+        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater, startDateGreater, startDateLesser);
 
         this.mediaList = [...this.mediaList, ...newMedia];
         this.hasMore = newMedia.length >= 50;
@@ -222,6 +241,8 @@ export class BookGridModal extends Modal {
         const status = this.filterFinished ? 'FINISHED' : undefined;
         let volLess: number | undefined;
         let volGreater: number | undefined;
+        let startDateGreater: number | undefined;
+        let startDateLesser: number | undefined;
 
         if (this.filterVolumes !== 'any') {
             if (this.filterVolumes === 'more') {
@@ -230,7 +251,15 @@ export class BookGridModal extends Modal {
                 volLess = parseInt(this.filterVolumes) + 1;
             }
         }
-        return { status, volLess, volGreater };
+
+        if (this.filterDecade !== 'any') {
+            const decadeStart = parseInt(this.filterDecade);
+            // AniList uses YYYYMMDD format for FuzzyDateInt
+            startDateGreater = decadeStart * 10000 + 101; // e.g., 19900101
+            startDateLesser = (decadeStart + 10) * 10000 + 101; // e.g., 20000101
+        }
+
+        return { status, volLess, volGreater, startDateGreater, startDateLesser };
     }
 
     renderItems(items: MediaNode[], clear: boolean = false) {

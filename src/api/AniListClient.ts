@@ -35,11 +35,11 @@ export class AniListClient {
         return json as T;
     }
 
-    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC', format?: string, page: number = 1, status?: string, volumesLess?: number, volumesGreater?: number): Promise<MediaNode[]> {
+    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC', format?: string, page: number = 1, status?: string, volumesLess?: number, volumesGreater?: number, startDateGreater?: number, startDateLesser?: number): Promise<MediaNode[]> {
         const query = `
-        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort], $format: MediaFormat, $page: Int, $status: MediaStatus, $volumesLess: Int, $volumesGreater: Int) {
+        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort], $format: MediaFormat, $page: Int, $status: MediaStatus, $volumesLess: Int, $volumesGreater: Int, $startDateGreater: FuzzyDateInt, $startDateLesser: FuzzyDateInt) {
             Page(perPage: 50, page: $page) {
-                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort, format: $format, status: $status, volumes_lesser: $volumesLess, volumes_greater: $volumesGreater) {
+                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort, format: $format, status: $status, volumes_lesser: $volumesLess, volumes_greater: $volumesGreater, startDate_greater: $startDateGreater, startDate_lesser: $startDateLesser) {
                     id
                     title {
                         romaji
@@ -71,6 +71,8 @@ export class AniListClient {
         if (status) variables.status = status;
         if (volumesLess) variables.volumesLess = volumesLess;
         if (volumesGreater) variables.volumesGreater = volumesGreater;
+        if (startDateGreater) variables.startDateGreater = startDateGreater;
+        if (startDateLesser) variables.startDateLesser = startDateLesser;
 
         try {
             const data = await this.query<any>(query, variables);
