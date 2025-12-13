@@ -12,7 +12,6 @@ export default class BookLogPlugin extends Plugin {
     fileService: BookFileService;
 
     async onload() {
-        console.log('Loading Book Log Plugin');
 
         // Add Ribbon Icon - Add this first to ensure it appears
         this.addRibbonIcon('book', 'Open Book Log', () => {
@@ -43,7 +42,6 @@ export default class BookLogPlugin extends Plugin {
     }
 
     onunload() {
-        console.log('Unloading Book Log Plugin');
     }
 
     openSearchModal() {

@@ -1,4 +1,4 @@
-import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl } from 'obsidian';
+import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation } from 'obsidian';
 import { AniListClient } from '../api/AniListClient';
 
 import { BookFileService } from '../services/BookFileService';
@@ -38,7 +38,8 @@ export class BookLogProcessor {
         Object.keys(statusMap).forEach(key => dropdown.addOption(key, statusMap[key]));
         dropdown.setValue(savedStatus);
         dropdown.onChange(async (newStatus) => {
-            await BookLogProcessor.updateStatus(app, ctx.sourcePath, newStatus);
+            const section = ctx.getSectionInfo(el);
+            await BookLogProcessor.updateStatus(app, ctx.sourcePath, newStatus, section);
         });
 
         // --- Fetch Details ---
@@ -182,16 +183,61 @@ export class BookLogProcessor {
         }
     }
 
-    static async updateStatus(app: App, path: string, newStatus: string) {
-        const file = app.vault.getAbstractFileByPath(path);
-        if (!file || !('read' in file)) return;
+    static async updateStatus(app: App, path: string, newStatus: string, section: MarkdownSectionInformation | null) {
+        const abstractFile = app.vault.getAbstractFileByPath(path);
+        if (!abstractFile) {
+            new Notice(`Error: File not found at path: ${path}`);
+            return;
+        }
 
-        const content = await app.vault.read(file as any);
-        // Replace status: ... line
-        const newContent = content.replace(/(status:\s*)(.*)/, `$1${newStatus}`);
+        // Check if it's a file (not a folder)
+        if (!('stat' in abstractFile)) {
+            new Notice('Error: Path is not a file');
+            return;
+        }
 
-        if (content !== newContent) {
-            await app.vault.modify(file as any, newContent);
+        const file = abstractFile as any; // TFile
+
+        try {
+            const content = await app.vault.read(file);
+            const lines = content.split('\n');
+
+            let statusLineIdx = -1;
+
+            if (section) {
+                // Search within the specific section
+                for (let i = section.lineStart; i <= section.lineEnd && i < lines.length; i++) {
+                    if (lines[i] && lines[i].trim().startsWith('status:')) {
+                        statusLineIdx = i;
+                        break;
+                    }
+                }
+            } else {
+                // Fallback: search entire file for first bookLog block's status
+                let inBookLogBlock = false;
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].trim().startsWith('```bookLog')) {
+                        inBookLogBlock = true;
+                    } else if (inBookLogBlock && lines[i].trim().startsWith('```')) {
+                        inBookLogBlock = false;
+                    } else if (inBookLogBlock && lines[i].trim().startsWith('status:')) {
+                        statusLineIdx = i;
+                        break;
+                    }
+                }
+            }
+
+            if (statusLineIdx !== -1) {
+                lines[statusLineIdx] = `status: ${newStatus}`;
+                const newContent = lines.join('\n');
+
+                await app.vault.modify(file, newContent);
+                new Notice(`Status updated to: ${newStatus}`);
+            } else {
+                new Notice('Error: status: line not found in code block');
+            }
+        } catch (e) {
+            new Notice(`Error updating status: ${e.message}`);
         }
     }
 

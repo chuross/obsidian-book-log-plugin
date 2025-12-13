@@ -35,6 +35,12 @@ export class BookFileService {
         }
 
         const tags = ['booklog'];
+        // Add format-specific tag
+        if (media.format === 'NOVEL') {
+            tags.push('booklog_novel');
+        } else {
+            tags.push('booklog_manga');
+        }
         if (media.genres) {
             media.genres.forEach(g => tags.push(`booklog_${this.sanitizeTag(g)}`));
         }
@@ -144,7 +150,6 @@ status: plan_to_read
                         if (match) {
                             const id = match[1];
                             if (!validIds.has(id)) {
-                                console.log(`Deleting unused thumbnail: ${img.path}`);
                                 await this.app.vault.delete(img);
                             }
                         }
