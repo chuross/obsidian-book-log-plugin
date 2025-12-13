@@ -1,6 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
 import { AniListClient } from '../api/AniListClient';
-import { TagTranslator } from '../utils/TagTranslator';
 
 export class SearchModal extends Modal {
     onSearch: (search: string, genre: string, tag: string, format: string) => void;
@@ -40,19 +39,7 @@ export class SearchModal extends Modal {
                 dropdown.onChange(value => selectedFormat = value);
             });
 
-        // Genre Selection
-        const genres = [
-            '', 'Action', 'Adventure', 'Comedy', 'Drama', 'Ecchi', 'Fantasy', 'Horror',
-            'Mahou Shoujo', 'Mecha', 'Music', 'Mystery', 'Psychological', 'Romance',
-            'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller'
-        ];
 
-        new Setting(contentEl)
-            .setName('ジャンル')
-            .addDropdown(dropdown => {
-                genres.forEach(g => dropdown.addOption(g.toUpperCase(), g || '指定なし'));
-                dropdown.onChange(value => selectedGenre = value === '' ? '' : value);
-            });
 
         // Tag Search
         new Setting(contentEl)
@@ -66,7 +53,7 @@ export class SearchModal extends Modal {
 
         const dataList = contentEl.createEl('datalist', { attr: { id: 'search-modal-tag-list' } });
         this.aniListClient.getTags().then(tags => {
-            tags.forEach(t => dataList.createEl('option', { value: TagTranslator.getDisplayTag(t) }));
+            tags.forEach(t => dataList.createEl('option', { value: t }));
         });
 
         new Setting(contentEl)
@@ -75,8 +62,7 @@ export class SearchModal extends Modal {
                 .setCta()
                 .onClick(() => {
                     this.close();
-                    const realTag = TagTranslator.getOriginalTag(searchTag);
-                    this.onSearch(searchQuery, selectedGenre, realTag, selectedFormat);
+                    this.onSearch(searchQuery, selectedGenre, searchTag, selectedFormat);
                 }));
     }
 

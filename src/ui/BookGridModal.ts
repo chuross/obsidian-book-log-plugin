@@ -73,7 +73,40 @@ export class BookGridModal extends Modal {
         sortSelect.value = this.currentSort;
         sortSelect.onchange = async (e) => {
             this.currentSort = (e.target as HTMLSelectElement).value;
-            this.loadData(); // Re-fetch for sorting handled by API or re-sort locally? API supports sorting.
+            this.loadData();
+        };
+
+        // Genre Filter
+        const genreSelect = controlsDiv.createEl('select');
+        const genres = [
+            { v: '', l: 'ジャンル: 指定なし' },
+            { v: 'ACTION', l: 'アクション' },
+            { v: 'ADVENTURE', l: '冒険' },
+            { v: 'COMEDY', l: 'コメディ' },
+            { v: 'DRAMA', l: 'ドラマ' },
+            { v: 'ECCHI', l: 'エッチ' },
+            { v: 'FANTASY', l: 'ファンタジー' },
+            { v: 'HORROR', l: 'ホラー' },
+            { v: 'MAHOU SHOUJO', l: '魔法少女' },
+            { v: 'MECHA', l: 'メカ' },
+            { v: 'MUSIC', l: '音楽' },
+            { v: 'MYSTERY', l: 'ミステリー' },
+            { v: 'PSYCHOLOGICAL', l: '心理' },
+            { v: 'ROMANCE', l: '恋愛' },
+            { v: 'SCI-FI', l: 'SF' },
+            { v: 'SLICE OF LIFE', l: '日常' },
+            { v: 'SPORTS', l: 'スポーツ' },
+            { v: 'SUPERNATURAL', l: '超常現象' },
+            { v: 'THRILLER', l: 'サスペンス' }
+        ];
+        genres.forEach(o => genreSelect.createEl('option', { value: o.v, text: o.l }));
+        genreSelect.value = this.genre;
+        genreSelect.onchange = (e) => {
+            this.genre = (e.target as HTMLSelectElement).value;
+            this.currentPage = 1;
+            this.mediaList = [];
+            this.hasMore = true;
+            this.loadData();
         };
 
         // Filter: Finished
