@@ -243,9 +243,9 @@
 
 /* Mobile Adjustments */
 body.is-mobile .anime-grid-header {
-    /* Keep row direction for Back and Options buttons */
-    /* flex-direction: column;  <-- REMOVED */
-    align-items: center;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     gap: 10px;
     padding: 10px;
 }
@@ -254,6 +254,8 @@ body.is-mobile .anime-grid-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    max-height: 5000px !important;
+    /* Force sufficient height */
 }
 
 body.is-mobile .anime-grid-controls select,
