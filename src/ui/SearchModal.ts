@@ -45,16 +45,12 @@ export class SearchModal extends Modal {
         new Setting(contentEl)
             .setName('タグ')
             .setDesc('タグで検索 (例: Isekai)')
-            .addText(text => {
-                text.setPlaceholder('タグ検索...');
-                text.inputEl.setAttribute('list', 'search-modal-tag-list');
-                text.onChange(value => searchTag = value);
+            .addDropdown(async dropdown => {
+                dropdown.addOption('', '指定なし');
+                const tags = await this.aniListClient.getTags();
+                tags.forEach(t => dropdown.addOption(t, t));
+                dropdown.onChange(value => searchTag = value);
             });
-
-        const dataList = contentEl.createEl('datalist', { attr: { id: 'search-modal-tag-list' } });
-        this.aniListClient.getTags().then(tags => {
-            tags.forEach(t => dataList.createEl('option', { value: t }));
-        });
 
         new Setting(contentEl)
             .addButton(btn => btn
