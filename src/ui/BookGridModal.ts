@@ -7,6 +7,7 @@ export class BookGridModal extends Modal {
     searchQuery: string;
     genre: string;
     tag: string;
+    format: string;
     onBookSelect: (book: MediaNode) => void;
     onBack?: () => void;
 
@@ -24,6 +25,7 @@ export class BookGridModal extends Modal {
         searchQuery: string,
         genre: string,
         tag: string,
+        format: string,
         onBookSelect: (book: MediaNode) => void,
         onBack?: () => void
     ) {
@@ -32,6 +34,7 @@ export class BookGridModal extends Modal {
         this.searchQuery = searchQuery;
         this.genre = genre;
         this.tag = tag;
+        this.format = format;
         this.onBookSelect = onBookSelect;
         this.onBack = onBack;
     }
@@ -108,7 +111,7 @@ export class BookGridModal extends Modal {
         if (gridContainer) gridContainer.empty();
         if (gridContainer) gridContainer.createDiv({ text: '読み込み中...', cls: 'anime-loading' });
 
-        this.mediaList = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort);
+        this.mediaList = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format);
         this.applyFilters();
     }
 

@@ -49,18 +49,19 @@ export default class BookLogPlugin extends Plugin {
     }
 
     openSearchModal() {
-        new SearchModal(this.app, (search, genre, tag) => {
-            this.openGridModal(search, genre, tag);
+        new SearchModal(this.app, (search, genre, tag, format) => {
+            this.openGridModal(search, genre, tag, format);
         }).open();
     }
 
-    openGridModal(search: string, genre: string, tag: string) {
+    openGridModal(search: string, genre: string, tag: string, format: string) {
         new BookGridModal(
             this.app,
             this.aniListClient,
             search,
             genre,
             tag,
+            format,
             async (book) => {
                 await this.handleBookSelection(book);
             },

@@ -35,11 +35,11 @@ export class AniListClient {
         return json as T;
     }
 
-    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC'): Promise<MediaNode[]> {
+    async searchManga(search: string, genre?: string, tag?: string, sort: string = 'POPULARITY_DESC', format?: string): Promise<MediaNode[]> {
         const query = `
-        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort]) {
+        query ($search: String, $genre: String, $tag: String, $sort: [MediaSort], $format: MediaFormat) {
             Page(perPage: 50) {
-                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort) {
+                media(search: $search, type: MANGA, genre: $genre, tag: $tag, sort: $sort, format: $format) {
                     id
                     title {
                         romaji
@@ -65,6 +65,7 @@ export class AniListClient {
         if (search) variables.search = search;
         if (genre) variables.genre = genre;
         if (tag) variables.tag = tag;
+        if (format) variables.format = format;
 
         try {
             const data = await this.query<any>(query, variables);

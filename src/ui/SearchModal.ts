@@ -1,9 +1,9 @@
 import { App, Modal, Setting } from 'obsidian';
 
 export class SearchModal extends Modal {
-    onSearch: (search: string, genre: string, tag: string) => void;
+    onSearch: (search: string, genre: string, tag: string, format: string) => void;
 
-    constructor(app: App, onSearch: (search: string, genre: string, tag: string) => void) {
+    constructor(app: App, onSearch: (search: string, genre: string, tag: string, format: string) => void) {
         super(app);
         this.onSearch = onSearch;
     }
@@ -16,6 +16,7 @@ export class SearchModal extends Modal {
         let searchQuery = '';
         let selectedGenre = '';
         let searchTag = '';
+        let selectedFormat = '';
 
         // Keyword Search
         new Setting(contentEl)
@@ -24,6 +25,16 @@ export class SearchModal extends Modal {
             .addText(text => text
                 .setPlaceholder('タイトルを入力...')
                 .onChange(value => searchQuery = value));
+
+        // Format Selection
+        new Setting(contentEl)
+            .setName('形式')
+            .addDropdown(dropdown => {
+                dropdown.addOption('', '指定なし');
+                dropdown.addOption('MANGA', 'マンガ');
+                dropdown.addOption('NOVEL', 'ライトノベル');
+                dropdown.onChange(value => selectedFormat = value);
+            });
 
         // Genre Selection
         const genres = [
@@ -53,7 +64,7 @@ export class SearchModal extends Modal {
                 .setCta()
                 .onClick(() => {
                     this.close();
-                    this.onSearch(searchQuery, selectedGenre, searchTag);
+                    this.onSearch(searchQuery, selectedGenre, searchTag, selectedFormat);
                 }));
     }
 
