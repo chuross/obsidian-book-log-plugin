@@ -1,7 +1,7 @@
 {
     "id": "obsidian-book-log-plugin",
     "name": "Book Log",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "minAppVersion": "0.15.0",
     "description": "Log your manga and light novel reading list using AniList API.",
     "author": "chuross",

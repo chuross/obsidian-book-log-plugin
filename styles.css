@@ -1,6 +1,10 @@
 /* Anime/Book Grid Modal */
 .anime-log-grid-modal .modal-content {
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
 }
 
 .anime-grid-header {
@@ -254,8 +258,20 @@ body.is-mobile .anime-grid-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    max-height: 5000px !important;
-    /* Force sufficient height */
+    max-height: 40vh;
+    /* Reasonable max height on mobile when expanded */
+    overflow-y: auto;
+    /* Allow scrolling within controls */
+    padding: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Ensure collapsed state works on mobile */
+body.is-mobile .anime-grid-controls.is-collapsed {
+    max-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
 }
 
 body.is-mobile .anime-grid-controls select,
@@ -275,8 +291,12 @@ body.is-mobile .anime-grid-container {
     grid-template-columns: repeat(2, 1fr);
     padding: 10px;
     gap: 10px;
-    height: calc(100vh - 200px);
-    /* Better dynamic height for mobile */
+    flex: 1;
+    /* Fill remaining space dynamically */
+    height: auto;
+    /* Remove fixed height */
+    min-height: 0;
+    /* Allow shrinking in flex context */
 }
 
 body.is-mobile .anime-card-title {
