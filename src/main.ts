@@ -13,6 +13,11 @@ export interface SearchCache {
     scrollPosition: number;
     currentPage: number;
     hasMore: boolean;
+    // Filter options
+    currentSort: string;
+    filterFinished: boolean;
+    filterVolumes: string;
+    filterDecade: string;
 }
 
 export default class BookLogPlugin extends Plugin {

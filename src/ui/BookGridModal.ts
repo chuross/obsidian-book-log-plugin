@@ -214,6 +214,13 @@ export class BookGridModal extends Modal {
             this.mediaList = this.initialCache.mediaList;
             this.currentPage = this.initialCache.currentPage;
             this.hasMore = this.initialCache.hasMore;
+
+            // Restore filter options
+            this.currentSort = this.initialCache.currentSort;
+            this.filterFinished = this.initialCache.filterFinished;
+            this.filterVolumes = this.initialCache.filterVolumes;
+            this.filterDecade = this.initialCache.filterDecade;
+
             this.isLoading = false;
 
             this.renderItems(this.mediaList, true);
@@ -363,7 +370,12 @@ export class BookGridModal extends Modal {
                 mediaList: this.mediaList,
                 scrollPosition: scrollPos,
                 currentPage: this.currentPage,
-                hasMore: this.hasMore
+                hasMore: this.hasMore,
+                // Filter options
+                currentSort: this.currentSort,
+                filterFinished: this.filterFinished,
+                filterVolumes: this.filterVolumes,
+                filterDecade: this.filterDecade
             };
             this.close();
             this.onBookSelect(media, cache);
