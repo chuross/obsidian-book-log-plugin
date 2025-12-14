@@ -1,5 +1,5 @@
 import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation } from 'obsidian';
-import { createHash } from 'crypto';
+import { md5 } from '../utils/md5';
 import { AniListClient } from '../api/AniListClient';
 
 import { BookFileService } from '../services/BookFileService';
@@ -167,7 +167,7 @@ export class BookLogProcessor {
                 if (isNovel) {
                     url = `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=digital-text&rh=p_n_feature_nineteen_browse-bin%3A3169286051`;
                 } else {
-                    const hash = createHash('md5').update(title).digest('hex');
+                    const hash = md5(title);
                     url = `https://sale-bon.com/detail/?series_hash=${hash}`;
                 }
 
