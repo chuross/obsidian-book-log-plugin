@@ -1,7 +1,35 @@
 /**
- * Pure JavaScript MD5 implementation
+ * Pure JavaScript MD5 implementation with proper UTF-8 support
  * Based on RFC 1321, compatible with browsers and mobile environments
  */
+
+function utf8Encode(str: string): string {
+    // Encode string to UTF-8 bytes represented as a string of charCodes
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        if (code < 0x80) {
+            result += String.fromCharCode(code);
+        } else if (code < 0x800) {
+            result += String.fromCharCode(0xc0 | (code >> 6));
+            result += String.fromCharCode(0x80 | (code & 0x3f));
+        } else if (code < 0xd800 || code >= 0xe000) {
+            result += String.fromCharCode(0xe0 | (code >> 12));
+            result += String.fromCharCode(0x80 | ((code >> 6) & 0x3f));
+            result += String.fromCharCode(0x80 | (code & 0x3f));
+        } else {
+            // Surrogate pair
+            i++;
+            const code2 = str.charCodeAt(i);
+            const combined = 0x10000 + (((code & 0x3ff) << 10) | (code2 & 0x3ff));
+            result += String.fromCharCode(0xf0 | (combined >> 18));
+            result += String.fromCharCode(0x80 | ((combined >> 12) & 0x3f));
+            result += String.fromCharCode(0x80 | ((combined >> 6) & 0x3f));
+            result += String.fromCharCode(0x80 | (combined & 0x3f));
+        }
+    }
+    return result;
+}
 
 function md5cycle(x: number[], k: number[]) {
     let a = x[0], b = x[1], c = x[2], d = x[3];
@@ -151,5 +179,7 @@ function add32(a: number, b: number) {
 }
 
 export function md5(s: string): string {
-    return hex(md51(s));
+    // First encode the string to UTF-8 bytes
+    const utf8String = utf8Encode(s);
+    return hex(md51(utf8String));
 }
