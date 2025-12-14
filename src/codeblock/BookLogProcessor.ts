@@ -193,7 +193,7 @@ export class BookLogProcessor {
 
                 const btnContainer = detailsContainer.createDiv({ cls: 'anime-log-section' });
                 new ButtonComponent(btnContainer)
-                    .setButtonText('Kindleで確認')
+                    .setButtonText('Kindle Unlimitedで確認')
                     .onClick(() => {
                         window.open(url, '_blank');
                     });

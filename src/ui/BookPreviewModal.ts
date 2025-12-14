@@ -83,7 +83,7 @@ export class BookPreviewModal extends Modal {
 
         const btnContainer = infoContainer.createDiv({ cls: 'preview-actions' });
         new ButtonComponent(btnContainer)
-            .setButtonText('Kindleで確認')
+            .setButtonText('Kindle Unlimitedを確認')
             .onClick(() => {
                 window.open(url, '_blank');
             });
