@@ -58,14 +58,16 @@ export class BookPreviewModal extends Modal {
 
         // Volumes
         const volText = this.book.volumes ? `全${this.book.volumes}巻` : '巻数不明';
-        infoContainer.createDiv({ text: volText, cls: 'preview-volume-info' });
+        const volDiv = infoContainer.createDiv({ text: volText, cls: 'preview-volume-info' });
 
-        // Unlimited Badge (Async)
+        // Unlimited Badge (Async) - Insert after volume div
         if (!isNovel) {
             this.saleBonClient.getUnlimitedCount(title).then(count => {
                 if (count !== null && count > 0) {
-                    const badge = infoContainer.createDiv({ cls: 'kindle-unlimited-badge' });
+                    const badge = createDiv({ cls: 'kindle-unlimited-badge' });
                     badge.createEl('span', { text: `Kindle Unlimited: ${count}巻` });
+                    // Insert after volDiv
+                    volDiv.insertAdjacentElement('afterend', badge);
                 }
             });
         }
