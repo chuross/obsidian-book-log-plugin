@@ -1,4 +1,4 @@
-import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation } from 'obsidian';
+import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation, TFile } from 'obsidian';
 import { md5 } from '../utils/md5';
 import { AniListClient } from '../api/AniListClient';
 
@@ -26,9 +26,10 @@ export class BookLogProcessor {
         const statusContainer = container.createDiv({ cls: 'anime-log-section anime-status' });
         statusContainer.createEl('h4', { text: '読書状態' });
         const dropdown = new DropdownComponent(statusContainer);
-        const savedStatus = params.status || 'plan_to_read';
+        const savedStatus = params.status || 'none';
 
         const statusMap: Record<string, string> = {
+            'none': '(未設定)',
             'plan_to_read': '読みたい',
             'reading': '読んでる',
             'completed': '読んだ',
@@ -40,7 +41,17 @@ export class BookLogProcessor {
         dropdown.setValue(savedStatus);
         dropdown.onChange(async (newStatus) => {
             const section = ctx.getSectionInfo(el);
+            const wasNone = savedStatus === 'none';
+
             await BookLogProcessor.updateStatus(app, ctx.sourcePath, newStatus, section);
+
+            // Move from draft folder if status changed from none
+            if (wasNone && newStatus !== 'none') {
+                const file = app.vault.getAbstractFileByPath(ctx.sourcePath);
+                if (file && file instanceof TFile) {
+                    await fileService.moveFromDraft(file);
+                }
+            }
         });
 
         // --- Fetch Details ---
