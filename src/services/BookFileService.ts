@@ -2,7 +2,6 @@ import { App, TFile, requestUrl, normalizePath, Notice } from 'obsidian';
 import { MediaNode } from '../api/types';
 
 const BOOK_LOG_DIR = 'booklog';
-const DRAFT_DIR = 'booklog/draft';
 const ATTACHMENTS_DIR = 'attachments/book';
 
 export class BookFileService {
@@ -20,11 +19,11 @@ export class BookFileService {
     }
 
     async createBookFile(media: MediaNode): Promise<TFile> {
-        await this.ensureDirectory(DRAFT_DIR);
+        await this.ensureDirectory(BOOK_LOG_DIR);
 
         const displayTitle = media.title.native || media.title.romaji || media.title.english || 'No Title';
         const sanitizedTitle = this.sanitizeFileName(displayTitle);
-        const fileName = `${DRAFT_DIR}/${media.id}_${sanitizedTitle}.md`;
+        const fileName = `${BOOK_LOG_DIR}/${media.id}_${sanitizedTitle}.md`;
 
         // Save thumbnail
         let thumbnailPath = '';
@@ -69,7 +68,7 @@ ${thumbnailEmbed}
 
 \`\`\`bookLog
 media_id: ${media.id}
-status: none
+status: plan_to_read
 
 \`\`\`
 `;
@@ -87,24 +86,6 @@ status: none
     async openFile(file: TFile) {
         const leaf = this.app.workspace.getLeaf(false);
         await leaf.openFile(file);
-    }
-
-    async moveFromDraft(file: TFile): Promise<TFile> {
-        // Only move if file is in draft folder
-        if (!file.path.startsWith(DRAFT_DIR)) {
-            return file;
-        }
-
-        await this.ensureDirectory(BOOK_LOG_DIR);
-
-        // New path in main booklog folder
-        const newPath = `${BOOK_LOG_DIR}/${file.name}`;
-
-        await this.app.fileManager.renameFile(file, newPath);
-
-        // Return the updated file reference
-        const newFile = this.app.vault.getAbstractFileByPath(newPath);
-        return newFile as TFile;
     }
 
     private async saveThumbnail(mediaId: number, imageUrl: string): Promise<string> {

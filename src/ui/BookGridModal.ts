@@ -1,6 +1,7 @@
 import { App, Modal, Notice } from 'obsidian';
 import { AniListClient } from '../api/AniListClient';
 import { MediaNode } from '../api/types';
+import { SearchCache } from '../main';
 
 export class BookGridModal extends Modal {
     apiClient: AniListClient;
@@ -8,8 +9,9 @@ export class BookGridModal extends Modal {
     genre: string;
     tag: string;
     format: string;
-    onBookSelect: (book: MediaNode) => void;
+    onBookSelect: (book: MediaNode, cache: SearchCache) => void;
     onBack?: () => void;
+    initialCache: SearchCache | null = null;
 
     mediaList: MediaNode[] = [];
     filteredList: MediaNode[] = [];
@@ -30,8 +32,9 @@ export class BookGridModal extends Modal {
         genre: string,
         tag: string,
         format: string,
-        onBookSelect: (book: MediaNode) => void,
-        onBack?: () => void
+        onBookSelect: (book: MediaNode, cache: SearchCache) => void,
+        onBack?: () => void,
+        initialCache: SearchCache | null = null
     ) {
         super(app);
         this.apiClient = apiClient;
@@ -41,6 +44,7 @@ export class BookGridModal extends Modal {
         this.format = format;
         this.onBookSelect = onBookSelect;
         this.onBack = onBack;
+        this.initialCache = initialCache;
     }
 
     async onOpen() {
@@ -201,6 +205,31 @@ export class BookGridModal extends Modal {
         const gridContainer = this.contentEl.querySelector('.anime-grid-container');
         if (!gridContainer) return;
         gridContainer.empty();
+
+        // Check if we have a cache to restore from
+        if (this.initialCache) {
+            const scrollToRestore = this.initialCache.scrollPosition;
+
+            // Restore from cache
+            this.mediaList = this.initialCache.mediaList;
+            this.currentPage = this.initialCache.currentPage;
+            this.hasMore = this.initialCache.hasMore;
+            this.isLoading = false;
+
+            this.renderItems(this.mediaList, true);
+
+            // Restore scroll position after rendering
+            if (scrollToRestore > 0) {
+                setTimeout(() => {
+                    gridContainer.scrollTop = scrollToRestore;
+                }, 100);
+            }
+
+            // Clear cache after restore
+            this.initialCache = null;
+            return;
+        }
+
         gridContainer.createDiv({ text: '読み込み中...', cls: 'anime-loading' });
 
         this.currentPage = 1;
@@ -208,14 +237,22 @@ export class BookGridModal extends Modal {
         this.hasMore = true;
         this.isLoading = true;
 
-        const { status, volLess, volGreater, startDateGreater, startDateLesser } = this.getFilterParams();
-        const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater, startDateGreater, startDateLesser);
+        try {
+            const { status, volLess, volGreater, startDateGreater, startDateLesser } = this.getFilterParams();
+            const newMedia = await this.apiClient.searchManga(this.searchQuery, this.genre, this.tag, this.currentSort, this.format, this.currentPage, status, volLess, volGreater, startDateGreater, startDateLesser);
 
-        this.mediaList = newMedia;
-        this.hasMore = newMedia.length >= 50;
-        this.isLoading = false;
+            this.mediaList = newMedia;
+            this.hasMore = newMedia.length >= 50;
+            this.isLoading = false;
 
-        this.renderItems(newMedia, true);
+            this.renderItems(newMedia, true);
+        } catch (e) {
+            console.error('Failed to load data', e);
+            new Notice('データの読み込みに失敗しました');
+            gridContainer.empty();
+            gridContainer.createDiv({ text: 'エラーが発生しました' });
+            this.isLoading = false;
+        }
     }
 
     async loadMore() {
@@ -321,8 +358,15 @@ export class BookGridModal extends Modal {
         card.createDiv({ text: `${statusText} ${volText}`, attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-top: 4px;' } });
 
         card.onclick = () => {
+            const scrollPos = this.contentEl.querySelector('.anime-grid-container')?.scrollTop || 0;
+            const cache: SearchCache = {
+                mediaList: this.mediaList,
+                scrollPosition: scrollPos,
+                currentPage: this.currentPage,
+                hasMore: this.hasMore
+            };
             this.close();
-            this.onBookSelect(media);
+            this.onBookSelect(media, cache);
         };
     }
 

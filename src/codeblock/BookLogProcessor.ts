@@ -3,6 +3,8 @@ import { md5 } from '../utils/md5';
 import { AniListClient } from '../api/AniListClient';
 import { SaleBonClient } from '../api/SaleBonClient';
 
+import { BookPreviewModal } from '../ui/BookPreviewModal';
+
 import { BookFileService } from '../services/BookFileService';
 
 export class BookLogProcessor {
@@ -47,13 +49,7 @@ export class BookLogProcessor {
 
             await BookLogProcessor.updateStatus(app, ctx.sourcePath, newStatus, section);
 
-            // Move from draft folder if status changed from none
-            if (wasNone && newStatus !== 'none') {
-                const file = app.vault.getAbstractFileByPath(ctx.sourcePath);
-                if (file && file instanceof TFile) {
-                    await fileService.moveFromDraft(file);
-                }
-            }
+
         });
 
         // --- Fetch Details ---
@@ -214,18 +210,20 @@ export class BookLogProcessor {
         if (existing) {
             await fileService.openFile(existing);
         } else {
-            new Notice(`Creating note for ${node.title.native || node.title.romaji}...`);
-            try {
-                // Fetch full details before creating file
-                const fullDetails = await aniList.getMangaDetails(node.id);
-                const dataToUse = fullDetails || node;
+            new BookPreviewModal(
+                app,
+                node,
+                aniList,
+                fileService,
+                async (bookToRegister) => {
+                    // Fetch full details before creating file
+                    const fullDetails = await aniList.getMangaDetails(bookToRegister.id);
+                    const dataToUse = fullDetails || bookToRegister;
 
-                const file = await fileService.createBookFile(dataToUse);
-                await fileService.openFile(file);
-            } catch (e) {
-                new Notice('Failed to create note');
-                console.error(e);
-            }
+                    const newFile = await fileService.createBookFile(dataToUse);
+                    await fileService.openFile(newFile);
+                }
+            ).open();
         }
     }
 

@@ -5,11 +5,20 @@ import { BookFileService } from './services/BookFileService';
 import { BookLogProcessor } from './codeblock/BookLogProcessor';
 import { SearchModal } from './ui/SearchModal';
 import { BookGridModal } from './ui/BookGridModal';
+import { BookPreviewModal } from './ui/BookPreviewModal';
 import { MediaNode } from './api/types';
+
+export interface SearchCache {
+    mediaList: MediaNode[];
+    scrollPosition: number;
+    currentPage: number;
+    hasMore: boolean;
+}
 
 export default class BookLogPlugin extends Plugin {
     aniListClient: AniListClient;
     fileService: BookFileService;
+    searchCache: SearchCache | null = null;
 
     async onload() {
 
@@ -37,7 +46,6 @@ export default class BookLogPlugin extends Plugin {
 
         } catch (error) {
             console.error('Failed to initialize Book Log Plugin services:', error);
-            // new Notice('Book Log Plugin initialization failed. Please check the console.');
         }
     }
 
@@ -45,6 +53,8 @@ export default class BookLogPlugin extends Plugin {
     }
 
     openSearchModal() {
+        // Clear cache when starting a new search
+        this.searchCache = null;
         new SearchModal(this.app, this.aniListClient, (search, genre, tag, format) => {
             this.openGridModal(search, genre, tag, format);
         }).open();
@@ -58,36 +68,43 @@ export default class BookLogPlugin extends Plugin {
             genre,
             tag,
             format,
-            async (book) => {
-                await this.handleBookSelection(book);
+            async (book, cache) => {
+                // Save cache before leaving
+                this.searchCache = cache;
+                await this.handleBookSelection(book, () => {
+                    this.openGridModal(search, genre, tag, format);
+                });
             },
             () => {
-                // On Back: Re-open search modal? Or keep previous state?
-                // For simplicity, re-open search modal formatted empty or could pass prev values if desired.
-                // We didn't persist state in SearchModal but we can just open it fresh.
+                // Clear cache and go back to search
+                this.searchCache = null;
                 this.openSearchModal();
-            }
+            },
+            this.searchCache
         ).open();
     }
 
-    async handleBookSelection(book: MediaNode) {
+    async handleBookSelection(book: MediaNode, onBack?: () => void) {
         const existing = await this.fileService.getBookFile(book.id);
         if (existing) {
             await this.fileService.openFile(existing);
         } else {
-            // Fetch detailed info first? 
-            // createBookFile uses MediaNode. If search result lacks info (like genre/staff), file might be incomplete.
-            // Search result MediaNode has basic info.
-            // Ideally we fetch full details here before creating file.
-            const fullDetails = await this.aniListClient.getMangaDetails(book.id);
-            if (fullDetails) {
-                const newFile = await this.fileService.createBookFile(fullDetails);
-                await this.fileService.openFile(newFile);
-            } else {
-                // Fallback
-                const newFile = await this.fileService.createBookFile(book);
-                await this.fileService.openFile(newFile);
-            }
+            // Open Preview Modal instead of creating file immediately
+            new BookPreviewModal(
+                this.app,
+                book,
+                this.aniListClient,
+                this.fileService,
+                async (bookToRegister) => {
+                    // Fetch full details before creating file
+                    const fullDetails = await this.aniListClient.getMangaDetails(bookToRegister.id);
+                    const dataToUse = fullDetails || bookToRegister;
+
+                    const newFile = await this.fileService.createBookFile(dataToUse);
+                    await this.fileService.openFile(newFile);
+                },
+                onBack
+            ).open();
         }
     }
 }
