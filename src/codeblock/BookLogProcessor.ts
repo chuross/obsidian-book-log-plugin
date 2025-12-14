@@ -1,11 +1,13 @@
 import { App, MarkdownPostProcessorContext, parseYaml, ButtonComponent, DropdownComponent, Notice, requestUrl, MarkdownSectionInformation, TFile } from 'obsidian';
 import { md5 } from '../utils/md5';
 import { AniListClient } from '../api/AniListClient';
+import { SaleBonClient } from '../api/SaleBonClient';
 
 import { BookFileService } from '../services/BookFileService';
 
 export class BookLogProcessor {
     static async postProcess(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext, app: App, aniList: AniListClient, fileService: BookFileService) {
+        const saleBon = new SaleBonClient();
         const container = el.createDiv({ cls: 'anime-log-container' });
 
         let params: any = {};
@@ -71,6 +73,17 @@ export class BookLogProcessor {
             // Add Volume Info to Status Section
             statusContainer.createEl('h4', { text: '巻数' });
             statusContainer.createDiv({ text: details.volumes ? `全${details.volumes}巻` : '不明' });
+
+            // Kindle Unlimited Badge
+            if (details.format !== 'NOVEL' && (details.title.native || details.title.romaji)) {
+                const title = details.title.native || details.title.romaji;
+                saleBon.getUnlimitedCount(title).then(count => {
+                    if (count !== null && count > 0) {
+                        const badge = statusContainer.createDiv({ cls: 'kindle-unlimited-badge' });
+                        badge.createEl('span', { text: `Kindle Unlimited: ${count}巻` });
+                    }
+                });
+            }
 
             // 1. Statistics Info (Merged)
             const infoSection = detailsContainer.createDiv({ cls: 'anime-log-section' });

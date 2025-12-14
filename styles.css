@@ -335,3 +335,14 @@ body.is-mobile .anime-card-title {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+.kindle-unlimited-badge {
+    display: inline-block;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin-top: 4px;
+    font-weight: bold;
+}
